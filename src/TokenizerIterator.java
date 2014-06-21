@@ -3,92 +3,96 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.StringTokenizer;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 
-public class TokenizerIterator implements Iterator<String> {
-	private ArrayList<String> tokens;
+public class TokenizerIterator implements Iterator<Token> {
+	private ArrayList<Token> tokens;
 	private int curr;
-	private String fileName;
+	private HashSet<String> stopwords;
 	
-	public TokenizerIterator(String fname){
-		tokens = new ArrayList<String>();
+	public TokenizerIterator(){
+		tokens = new ArrayList<Token>();
 		curr = 0;
-		fileName = fname;
+		stopwords = new HashSet<String>();
+	}
+	
+	public void readStopWords(){
+		try{
+			BufferedReader br = new BufferedReader(new FileReader(config.STOP_WORD_FILE));
+			String word;
+			while((word=br.readLine())!=null){
+				stopwords.add(word);
+			}
+			br.close();
+//			System.out.println("Stop Words Read.");
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean hasNext(){
-		return curr < tokens.size();
+		boolean more =  curr < tokens.size();
+		if(!more){
+			tokens.clear();
+			curr=0;
+		}
+		return more;
 	}
 	
-	public String next(){
+	public Token next(){
 		return tokens.get(curr++);
 	}
 	
-	public void tokenize() throws IOException{
-		BufferedReader br = new BufferedReader( new FileReader(fileName));
-//		File input = new File(fileName);
-//		Document doc = Jsoup.parse(input, "UTF-8", "http://en.wikipedia.org/wiki/");
+	public void tokenize(String fileName) {
 		
-//		System.out.println(doc.body().text());
+//		readStopWords();
 		
-		String line;
-//		int count=0;
-//		int openang=0;
-//		int script=0;
-//		int style=0;
-		while( (line=br.readLine()) != null){
-			int s=0,i;
-			for(i=0; i<line.length(); i++){
-				if(line.charAt(i)==' '){
-					tokens.add(line.substring(s,i));
-					s=i+1;
-				}
+		try{
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse(new File(fileName));
+			
+			doc.getDocumentElement().normalize();
+			String delim = " ;&{}[]/|";
+			
+			//		System.out.println(title.getLength());
+			String title = doc.getElementsByTagName("title").item(0).getTextContent();
+			String text = doc.getElementsByTagName("text").item(0).getTextContent();
+			
+			StringTokenizer tok = new StringTokenizer(title, delim);
+			while(tok.hasMoreTokens()){
+				tokens.add(new Token(tok.nextToken().trim(), true));
 			}
-			if(s<i)
-				tokens.add(line.substring(s,i));
-		}
+			
+			tok = new StringTokenizer(text, delim);
+			while(tok.hasMoreTokens()){
+				tokens.add(new Token(tok.nextToken().trim(), false));
+			}
+			
+		 }catch (SAXParseException err) {
+	        System.out.println ("** Parsing error" + ", line " 
+	             + err.getLineNumber () + ", uri " + err.getSystemId ());
+	        System.out.println(" " + err.getMessage ());
+	
+	    }catch (SAXException e) {
+	        Exception x = e.getException ();
+	        ((x == null) ? e : x).printStackTrace ();
+	
+	    }catch (Throwable t) {
+	        t.printStackTrace ();
+	    }
+		
 				
-				
-//				System.out.println(openang+" "+script+" "+style+" "+line.charAt(i));
-//				if(line.charAt(i)=='<'){
-//					if(i+7 <= line.length() && line.substring(i+1, i+7).equalsIgnoreCase("script"))
-//						script++;
-//					if(i+8<=line.length() && line.substring(i+1, i+8).equalsIgnoreCase("/script"))
-//						script--;
-//					if(i+6 <= line.length() && line.substring(i+1, i+6).equalsIgnoreCase("style")){
-//						style++;
-//						System.out.println(++count);
-//					}
-//					if(i+7<=line.length() && line.substring(i+1, i+7).equalsIgnoreCase("/style"))
-//						style--;
-//					
-//					if(openang==0 && s<i && script==0 && style==0){
-//						tokens.add(line.substring(s,i));
-//					}
-//					openang++;
-//				}
-//					
-//				if(line.charAt(i)=='>'){
-//					openang--;
-//					if(openang==0)
-//						s=i+1;
-//				}
-//				
-//				if(openang==0){
-//					if(line.charAt(i)==' ' && script==0 && style ==0){
-//						tokens.add(line.substring(s,i));
-//						s=i+1;
-//					}
-//				}
-//				
-//			}
-//			if(s<i && openang==0 && script==0 && style==0)
-//				tokens.add(line.substring(s,i));
-//		}
 	}
 
 	@Override
