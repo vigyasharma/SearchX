@@ -1,6 +1,8 @@
 //import java.io.BufferedWriter;
+import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 
@@ -8,44 +10,25 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
+//		Test.runTest();
 		
-		//Testing Tokenizer
-//		Tokenizer tok = new Tokenizer(config.CORPUS+"/298.xml");
-//		Tokenizer tok = new Tokenizer("C:/Users/vigsharm/workspace/SearchX/files/ferrari.txt");
+		Search bot = new Search();
 		
-		// Writing tokens to an output file for testing
-//		BufferedWriter br = new BufferedWriter(new FileWriter("C:/Users/vigsharm/workspace/SearchX/output/tokens.txt"));
-//		for(String s: tok)
-//			br.write(s+"\n");
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		String query="";
+		System.out.println("\t\tWelcome to SearchX: Search Engine on Wiki Dump\n\t\tPress exit() to quit.\n\n");
 		
-//		ArrayList<String> docs = Corpus.getDocumentIds();
-//		DiskIO.writeDocIdsToDisk(docs);
-		
-//		String docs[] = Corpus.getDocumentIds();
-//		Tokenizer tokIt = new Tokenizer();
-//		for(int i=0; i<2; i++){
-//			System.out.println(i+"\t"+docs[i]);
-//			tokIt.setFile(docs[i]);
-//			for(Token tok:tokIt){
-//				//if(tok.inTitle)
-//				System.out.println(tok.word+" - Title:"+tok.inTitle);
-//			}
-//			System.out.println("###############################################################");
-//		}
-		
-		Indexer index = new Indexer();
-		index.buildIndex();
-		
-		System.out.println(index.map.size());
-		for(String word: index.map.keySet()){
-			System.out.print(word+" :- ");
-			for(Posting p: index.map.get(word)){
-				System.out.print(p.getId()+","+p.getFreq()+" ");
-			}
-			System.out.println();
+		while(true){
+			System.out.println("Enter Search Query:\t");
+			query = br.readLine().trim().toLowerCase();
+			if(query.equalsIgnoreCase("exit()"))
+				break;
+			
+			bot.lookUp(query);
+			bot.displayResults();
+			
 		}
-		
-		System.out.println("Done!!");
+		System.out.println("*** Thank You. ***");
 	}
 
 }

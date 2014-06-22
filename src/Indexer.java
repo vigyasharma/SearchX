@@ -2,6 +2,11 @@ import java.util.HashMap;
 import java.util.TreeSet;
 
 
+/**
+ * @author Vigya Sharma
+ * @email vigyasharma@outlook.com
+ * Class to Build inverted index on scanned tokens.
+ */
 public class Indexer {
 
 	public String[] docs;

@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,6 +11,7 @@ import java.util.StringTokenizer;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -63,20 +66,33 @@ public class TokenizerIterator implements Iterator<Token> {
 			Document doc = db.parse(new File(fileName));
 			
 			doc.getDocumentElement().normalize();
-			String delim = " ;&{}[]/|";
+			
 			
 			//		System.out.println(title.getLength());
 			String title = doc.getElementsByTagName("title").item(0).getTextContent();
 			String text = doc.getElementsByTagName("text").item(0).getTextContent();
 			
-			StringTokenizer tok = new StringTokenizer(title, delim);
-			while(tok.hasMoreTokens()){
-				tokens.add(new Token(tok.nextToken().trim(), true));
+			/*
+			 * Getting titles of all files for own reference.
+			 * Remove later.
+			 */
+			try{
+				BufferedWriter br = new BufferedWriter(new FileWriter(config.TITLES, true));
+				br.write(title+"\t"+fileName+"\n");
+				br.close();	
+			}
+			catch(IOException e){
+				e.printStackTrace();
 			}
 			
-			tok = new StringTokenizer(text, delim);
+			StringTokenizer tok = new StringTokenizer(title, config.DELIM);
 			while(tok.hasMoreTokens()){
-				tokens.add(new Token(tok.nextToken().trim(), false));
+				tokens.add(new Token(tok.nextToken().trim().toLowerCase(), true));
+			}
+			
+			tok = new StringTokenizer(text, config.DELIM);
+			while(tok.hasMoreTokens()){
+				tokens.add(new Token(tok.nextToken().trim().toLowerCase(), false));
 			}
 			
 		 }catch (SAXParseException err) {
