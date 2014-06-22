@@ -81,7 +81,7 @@ public class Search {
 		Collections.sort(results);
 		int i=1;
 		for(Result r: results){
-			System.out.println(i+".\t"+index.docs[r.id]+"\t\t("+r.relevance+")");
+			System.out.println(i+".\t"+index.docs[r.id]+"\t\t("+r.relevance+")"+"\tmatches="+r.matches+"  title="+r.inTitle);
 			i++;
 		}
 //			System.out.println(r.id+" -- "+r.relevance);

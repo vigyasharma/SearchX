@@ -76,23 +76,30 @@ public class TokenizerIterator implements Iterator<Token> {
 			 * Getting titles of all files for own reference.
 			 * Remove later.
 			 */
-			try{
-				BufferedWriter br = new BufferedWriter(new FileWriter(config.TITLES, true));
-				br.write(title+"\t"+fileName+"\n");
-				br.close();	
-			}
-			catch(IOException e){
-				e.printStackTrace();
-			}
+//			try{
+//				BufferedWriter br = new BufferedWriter(new FileWriter(config.TITLES, true));
+//				br.write(title+"\t"+fileName+"\n");
+//				br.close();	
+//			}
+//			catch(IOException e){
+//				e.printStackTrace();
+//			}
 			
+			String word;
 			StringTokenizer tok = new StringTokenizer(title, config.DELIM);
 			while(tok.hasMoreTokens()){
-				tokens.add(new Token(tok.nextToken().trim().toLowerCase(), true));
+				word = tok.nextToken().trim().toLowerCase();
+				if(stopwords.contains(word))
+					continue;
+				tokens.add(new Token(word, true));
 			}
 			
 			tok = new StringTokenizer(text, config.DELIM);
 			while(tok.hasMoreTokens()){
-				tokens.add(new Token(tok.nextToken().trim().toLowerCase(), false));
+				word = tok.nextToken().trim().toLowerCase();
+				if(stopwords.contains(word))
+					continue;
+				tokens.add(new Token(word, false));
 			}
 			
 		 }catch (SAXParseException err) {
