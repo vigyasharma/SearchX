@@ -21,11 +21,13 @@ public class Search implements Serializable {
 	private Indexer index;
 	private LinkedList<Result> results;
 	private HashMap<Integer, HashMap<String, TreeSet<Posting>>> inMemoryPages;
+	private LinkedList<Integer> lru;
 	
 	public Search(){
 		index = new Indexer();
 		results = new LinkedList<Result>();
 		inMemoryPages = new HashMap<Integer, HashMap<String, TreeSet<Posting>>>();
+		lru = new LinkedList<Integer>();
 	}
 	
 	public void lookUp(String query){
@@ -40,11 +42,29 @@ public class Search implements Serializable {
 			
 			for(int page: index.pageTable.get(word)){	// for all pages of that term
 				if(!inMemoryPages.containsKey(page)){
+					if(lru.size() == config.MAX_PAGES_IN_MEMORY){
+						int pageToRemove = lru.removeFirst();
+						if(config.DEBUG)
+							System.out.println("Page Replacement...");
+						inMemoryPages.remove(pageToRemove);
+//						lru.addLast(page);
+					}
+					if(config.DEBUG){
+						System.out.println("Page Fetch:");
+						System.out.println("Total pages in memory: "+inMemoryPages.size()+" "+lru.size());
+					}
 					inMemoryPages.put(page, (HashMap<String, TreeSet<Posting>>) Serializer.readObject("indexPage"+page));
 				}
+				else
+					lru.remove((Integer)page);		//Will add to end
+				lru.addLast(page);
 				buffer = inMemoryPages.get(page);		//get map for that word
 				p.addAll(buffer.get(word));				// add posting list for that word. collect all such lists.
+				
+				if(config.DEBUG)
+					System.out.println("Total pages in memory: "+inMemoryPages.size()+" "+lru.size());
 			}
+			
 			mergePostings(p);
 		}
 		

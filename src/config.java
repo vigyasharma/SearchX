@@ -14,7 +14,8 @@ public class config {
 	
 	public static final int MAX_TERMS = 1000;		// Max terms in 1 dump of index
 	public static final int MAX_POSTING_SIZE = 9;	// Max docs in 1 index dump list
-	public static final boolean DEBUG=true;
+	public static final int MAX_PAGES_IN_MEMORY = 7;
+	public static final boolean DEBUG=false;
 	
 	public static final String DELIM = " ;&{}[]/|+:";
 	
