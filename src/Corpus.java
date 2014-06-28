@@ -44,8 +44,12 @@ public class Corpus {
 	public static String[] getDocumentIds(){
 //		try{
 			File docfile = new File(config.DOCID_FILE);
-			if(!docfile.exists())
+			if(!docfile.exists()){
+				System.out.println("Generating Doc Ids and writing to disk.");
 				DiskIO.writeDocIdsToDisk(scanCorpus());
+				System.out.println("Doc Ids generated.");
+			}
+				
 			return DiskIO.readDocIdsFromDisk();
 //		}
 //		catch(Exception e){

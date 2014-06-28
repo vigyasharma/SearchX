@@ -1,5 +1,9 @@
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
@@ -12,63 +16,80 @@ import java.util.TreeSet;
  * For lookup in inverted index.
  * Merges relevant postings lists and obtains relevance for each result.
  */
-public class Search {
+public class Search implements Serializable {
 
 	private Indexer index;
 	private LinkedList<Result> results;
+	private HashMap<Integer, HashMap<String, TreeSet<Posting>>> inMemoryPages;
 	
 	public Search(){
 		index = new Indexer();
-		index.buildIndex();
 		results = new LinkedList<Result>();
+		inMemoryPages = new HashMap<Integer, HashMap<String, TreeSet<Posting>>>();
+	}
+	
+	public void lookUp(String query){
+		StringTokenizer tok = new StringTokenizer(query, config.DELIM);
+		HashMap<String, TreeSet<Posting>> buffer;
+		
+		while(tok.hasMoreTokens()){
+			String word = tok.nextToken();
+			TreeSet<Posting> p = new TreeSet<Posting>();
+			if(!index.pageTable.containsKey(word))
+				continue;
+			
+			for(int page: index.pageTable.get(word)){	// for all pages of that term
+				if(!inMemoryPages.containsKey(page)){
+					inMemoryPages.put(page, (HashMap<String, TreeSet<Posting>>) Serializer.readObject("indexPage"+page));
+				}
+				buffer = inMemoryPages.get(page);		//get map for that word
+				p.addAll(buffer.get(word));				// add posting list for that word. collect all such lists.
+			}
+			mergePostings(p);
+		}
+		
 	}
 	
 	/**
 	 * Merges Posting lists to give more relevance to intersection of search tokens.
 	 * Calculates relevance for the final set.
 	 */
-	public void lookUp(String query){
-		StringTokenizer tok = new StringTokenizer(query, config.DELIM);
-		
-		while(tok.hasMoreTokens()){
-			String word = tok.nextToken();
-			TreeSet<Posting> t = index.map.get(word);
-			if(t==null)
-				return;
-			if(results.isEmpty()){
-				for(Posting p: t){
-					results.addLast(new Result(p));
-				}
-			}
-			else{
-				int i=0;
-				Iterator<Posting> treeIt = t.iterator();
-				Posting p=null;
-				if(treeIt.hasNext())
-					p = treeIt.next();
-				while(treeIt.hasNext() && i<results.size()){
-					if(results.get(i).id < p.getId())
-						i++;
-					else if(results.get(i).id == p.getId()){
-						Result r = results.get(i);
-						r.addPosting(p);
-						results.set(i, r);
-						i++;
-						if(treeIt.hasNext())
-							p = treeIt.next();
-					}
-					else{
-						results.add(i, new Result(p));
-						i++;
-						if(treeIt.hasNext())
-							p = treeIt.next();
-					}
-				}
-				while(treeIt.hasNext())
-					results.addLast(new Result(treeIt.next()));
+
+	public void mergePostings(TreeSet<Posting> t){
+		if(t==null)
+			return;
+		if(results.isEmpty()){
+			for(Posting p: t){
+				results.addLast(new Result(p));
 			}
 		}
-		System.out.println("Total Results obtained: "+results.size());
+		else{
+			int i=0;
+			Iterator<Posting> treeIt = t.iterator();
+			Posting p=null;
+			if(treeIt.hasNext())
+				p = treeIt.next();
+			while(treeIt.hasNext() && i<results.size()){
+				if(results.get(i).id < p.getId())
+					i++;
+				else if(results.get(i).id == p.getId()){
+					Result r = results.get(i);
+					r.addPosting(p);
+					results.set(i, r);
+					i++;
+					if(treeIt.hasNext())
+						p = treeIt.next();
+				}
+				else{
+					results.add(i, new Result(p));
+					i++;
+					if(treeIt.hasNext())
+						p = treeIt.next();
+				}
+			}
+			while(treeIt.hasNext())
+				results.addLast(new Result(treeIt.next()));
+		}
 	}
 
 	public void displayResults(){
@@ -89,4 +110,7 @@ public class Search {
 		results.clear();
 	}
 	
+	public void close(){
+		index.close();
+	}
 }

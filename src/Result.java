@@ -1,10 +1,12 @@
+import java.io.Serializable;
+
 
 /**
  * @author Vigya Sharma
  * @email vigyasharma@outlook.com
  * The result object. Holds relevance.
  */
-public class Result implements Comparable<Result> {
+public class Result implements Comparable<Result>, Serializable {
 	
 	public int id;		//Doc Id
 	public int matches;		// No of terms in query present in this doc

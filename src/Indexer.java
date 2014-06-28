@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeSet;
 
@@ -7,20 +10,54 @@ import java.util.TreeSet;
  * @email vigyasharma@outlook.com
  * Class to Build inverted index on scanned tokens.
  */
-public class Indexer {
+public class Indexer implements Serializable {
 
 	public String[] docs;
 	public HashMap<String, TreeSet<Posting>> map;
 	private int docLen;
+	public HashMap<String, ArrayList<Integer>> pageTable;
+	private int pageNo;
 	
 	public Indexer(){
 		docs = Corpus.getDocumentIds();
 		docLen = docs.length;
 		map = new HashMap<String, TreeSet<Posting>>();
+		
+		File f = new File(config.OBJECT_DUMP+config.PAGE_TABLE);
+		if(f.exists()){
+			System.out.println("Loading Page Table...");
+			pageTable = (HashMap<String, ArrayList<Integer>>) Serializer.readObject(config.PAGE_TABLE);
+		}
+		else{
+			pageTable = new HashMap<String, ArrayList<Integer>>();
+			pageNo = 0;
+			System.out.println("No previous index found.\nBuilding Index:");
+			buildIndex();
+		}
+		
+	}
+	
+	public void pushToPageTable(){
+		pageNo++;
+		for(String term: map.keySet()){
+			ArrayList<Integer> l;
+			
+			if(pageTable.containsKey(term))
+				l = pageTable.get(term);
+			else
+				l = new ArrayList<Integer>();
+			
+			l.add(pageNo);
+			pageTable.put(term, l);
+		}
+		
+		if(config.DEBUG)
+			System.out.println("Page Table Populated for page: "+pageNo);
 	}
 	
 	public void buildIndex(){
 		Tokenizer tokIt = new Tokenizer();
+		int docsScanned = 0;
 		for(int id=0; id<docLen; id++){
 			tokIt.setFile(docs[id]);
 			for(Token tok: tokIt){
@@ -50,8 +87,32 @@ public class Indexer {
 					}
 				}
 			}	// done for all token in 1 doc
+			docsScanned++;
+			
+			
+			/* Dump map if size limit exceeded */
+			if((map.size() > config.MAX_TERMS || docsScanned % config.MAX_POSTING_SIZE==0) && !map.isEmpty()){
+				pushToPageTable();
+				Serializer.dumpObject(map, "indexPage"+pageNo);
+				map.clear();
+			}
+			
 		}	// next doc
 		
+		if(!map.isEmpty()){
+			pushToPageTable();
+			Serializer.dumpObject(map, "indexPage"+pageNo);
+			map.clear();
+		}
+		
+	}	//End of buildIndex
+	
+	public void close(){
+		File f = new File(config.OBJECT_DUMP+config.PAGE_TABLE);
+		if(!f.exists()){
+			System.out.println("Dumping Page Table to disk...");
+			Serializer.dumpObject(pageTable, config.PAGE_TABLE);
+		}
 	}
 	
 }

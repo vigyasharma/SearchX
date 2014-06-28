@@ -1,3 +1,5 @@
+import java.io.Serializable;
+
 
 /**
  * @author Vigya Sharma
@@ -5,7 +7,7 @@
  * A single posting object. Contains attribute to be stored with doc id in each index element.
  */
 
-public class Posting implements Comparable<Posting> {
+public class Posting implements Comparable<Posting>, Serializable {
 	private int id;
 	private boolean inTitle;
 	private int freq;
